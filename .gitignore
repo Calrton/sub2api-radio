@@ -8,3 +8,13 @@ Thumbs.db
 .env.*
 !.env.example
 docs/images/*.log
+
+# 本地预览、诊断与截图脚本，不随开源发布
+check_intro_r90d.cjs
+diag_visual*.cjs
+measure_intro.cjs
+shot_visual.cjs
+shot_promo.cjs
+preview-server.cjs
+demo/promo-preview.html
+demo/xihe-radio-portrait.webp

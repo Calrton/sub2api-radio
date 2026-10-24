@@ -371,6 +371,27 @@ onBeforeUnmount(() => {
             <img :src="intro.imageSrc" :alt="intro.imageAlt || ''" />
             <span class="radio-intro-on-air">ON AIR</span>
           </div>
+          <div v-if="intro.promo" class="radio-intro-promo">
+            <span class="radio-intro-promo-dot" aria-hidden="true"></span>
+            <p class="radio-intro-promo-text">
+              <b v-if="intro.promo.label">{{ intro.promo.label }}</b>
+              <template v-if="intro.promo.items && intro.promo.items.length">
+                <span v-if="intro.promo.label"> · </span>{{ intro.promo.items.join(' / ') }}
+              </template>
+              <span v-if="intro.promo.note" class="radio-intro-promo-note">
+                （{{ intro.promo.note }}）
+              </span>
+            </p>
+            <a
+              v-if="intro.promo.linkHref"
+              class="radio-intro-promo-link"
+              :href="intro.promo.linkHref"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {{ intro.promo.linkLabel || '了解更多' }}
+            </a>
+          </div>
         </div>
       </section>
     </Transition>
@@ -837,6 +858,62 @@ onBeforeUnmount(() => {
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.18em;
+}
+
+.radio-intro-promo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1 / -1;
+  padding: 12px 46px;
+  color: rgb(248 250 252 / 0.7);
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--radio-primary-bright) 14%, transparent),
+    transparent 62%
+  );
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.radio-intro-promo-dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--radio-primary-bright);
+}
+
+.radio-intro-promo-text {
+  min-width: 0;
+  margin: 0;
+}
+
+.radio-intro-promo-text b {
+  color: #f8fafc;
+  font-weight: 750;
+}
+
+.radio-intro-promo-note {
+  color: #f0c98b;
+}
+
+.radio-intro-promo-link {
+  flex: none;
+  margin-left: auto;
+  padding: 5px 11px;
+  color: #16110c;
+  border-radius: 6px;
+  background: var(--radio-primary-bright);
+  font-size: 10.5px;
+  font-weight: 750;
+  text-decoration: none;
+  transition: filter 140ms ease;
+}
+
+.radio-intro-promo-link:hover {
+  filter: brightness(1.08);
 }
 
 .radio-intro-enter-active,
@@ -1372,6 +1449,18 @@ onBeforeUnmount(() => {
   .radio-intro-meta {
     margin-top: 19px;
   }
+
+  .radio-intro-promo {
+    flex-wrap: wrap;
+    padding: 12px 24px;
+    row-gap: 8px;
+  }
+
+  .radio-intro-promo-link {
+    width: 100%;
+    margin-left: 0;
+    text-align: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1405,7 +1494,8 @@ onBeforeUnmount(() => {
   .radio-intro-secondary,
   .radio-main-play,
   .radio-icon-button,
-  .radio-volume-button {
+  .radio-volume-button,
+  .radio-intro-promo-link {
     forced-color-adjust: none;
     color: ButtonText;
     border: 1px solid ButtonText;
@@ -1417,6 +1507,21 @@ onBeforeUnmount(() => {
     width: min(430px, 100%);
     min-height: 0;
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .radio-intro-promo {
+    color: CanvasText;
+    border-top: 1px solid ButtonText;
+    background: Canvas;
+  }
+
+  .radio-intro-promo-text b,
+  .radio-intro-promo-note {
+    color: CanvasText;
+  }
+
+  .radio-intro-promo-dot {
+    background: CanvasText;
   }
 
   .radio-intro-visual,
