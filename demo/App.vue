@@ -25,9 +25,19 @@ import {
 } from '@lucide/vue'
 import Sub2ApiRadio from '../src/components/Sub2ApiRadio.vue'
 import { sampleTracks } from '../src/data/sampleTracks'
+import type { RadioIntro } from '../src/lib/types'
 
 const isDark = ref(false)
 const radioRef = ref<InstanceType<typeof Sub2ApiRadio> | null>(null)
+
+const radioIntro: RadioIntro = {
+  title: '进入工作台',
+  description: '让音乐在需要时响起，也可以安静地开始今天。',
+  kicker: 'CONSOLE RADIO',
+  primaryLabel: '开启音乐',
+  secondaryLabel: '静音进入',
+  meta: '随机播放 · 随时可换',
+}
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, active: true },
@@ -182,10 +192,10 @@ onMounted(() => {
           <span>Settings</span>
         </a>
         <div class="sidebar-user">
-          <span class="user-avatar">CL</span>
+          <span class="user-avatar">NO</span>
           <span>
-            <strong>Calrton</strong>
-            <small>Owner</small>
+            <strong>Nebula Owner</strong>
+            <small>Workspace admin</small>
           </span>
           <MoreHorizontal :size="17" aria-hidden="true" />
         </div>
@@ -375,6 +385,7 @@ onMounted(() => {
       station-name="Sub2API Radio"
       storage-key="sub2api-radio-demo"
       :theme="isDark ? 'dark' : 'light'"
+      :intro="radioIntro"
     />
   </div>
 </template>

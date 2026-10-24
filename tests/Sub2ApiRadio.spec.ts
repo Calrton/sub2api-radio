@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import Sub2ApiRadio from '../src/components/Sub2ApiRadio.vue'
-import type { RadioTrack } from '../src/lib/types'
+import type { RadioIntro, RadioTrack } from '../src/lib/types'
 
 const tracks: RadioTrack[] = [
   {
@@ -22,12 +22,22 @@ const tracks: RadioTrack[] = [
   },
 ]
 
+const intro: RadioIntro = {
+  title: 'Enter the studio',
+  description: 'Start with sound, or settle in quietly.',
+  kicker: 'TEST RADIO',
+  primaryLabel: 'Play music',
+  secondaryLabel: 'Enter silently',
+  meta: 'Shuffled every visit',
+}
+
 describe('Sub2ApiRadio', () => {
   let wrapper: VueWrapper | undefined
   let playSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     playSpy = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
     vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {})
@@ -124,5 +134,80 @@ describe('Sub2ApiRadio', () => {
     expect(
       document.body.querySelector('.sub2api-radio')?.classList.contains('is-open'),
     ).toBe(true)
+  })
+
+  it('shows the optional intro on first mount', async () => {
+    wrapper = mount(Sub2ApiRadio, {
+      attachTo: document.body,
+      props: {
+        tracks,
+        storageKey: 'test-radio',
+        intro,
+      },
+    })
+    await flushPromises()
+
+    expect(document.body.querySelector('[data-testid="radio-intro"]')).not.toBeNull()
+    expect(document.body.querySelector('.radio-intro h2')?.textContent).toBe(intro.title)
+  })
+
+  it('starts playback and remembers the choice when entering with music', async () => {
+    wrapper = mount(Sub2ApiRadio, {
+      attachTo: document.body,
+      props: {
+        tracks,
+        storageKey: 'test-radio',
+        intro,
+      },
+    })
+    await flushPromises()
+
+    document.body.querySelector<HTMLButtonElement>('[data-testid="radio-intro-play"]')?.click()
+    await flushPromises()
+
+    expect(playSpy).toHaveBeenCalledTimes(1)
+    expect(sessionStorage.getItem('test-radio:intro')).toBe('seen')
+    expect(document.body.querySelector('[data-testid="radio-intro"]')).toBeNull()
+  })
+
+  it('does not start playback when entering silently', async () => {
+    wrapper = mount(Sub2ApiRadio, {
+      attachTo: document.body,
+      props: {
+        tracks,
+        storageKey: 'test-radio',
+        intro,
+      },
+    })
+    await flushPromises()
+
+    document.body.querySelector<HTMLButtonElement>('[data-testid="radio-intro-silent"]')?.click()
+    await flushPromises()
+
+    expect(playSpy).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem('test-radio:intro')).toBe('seen')
+    expect(document.body.querySelector('[data-testid="radio-intro"]')).toBeNull()
+  })
+
+  it('does not show the intro again in the same session', async () => {
+    sessionStorage.setItem('test-radio:intro', 'seen')
+
+    wrapper = mount(Sub2ApiRadio, {
+      attachTo: document.body,
+      props: {
+        tracks,
+        storageKey: 'test-radio',
+        intro,
+      },
+    })
+    await flushPromises()
+
+    expect(document.body.querySelector('[data-testid="radio-intro"]')).toBeNull()
+  })
+
+  it('stays backward compatible when no intro is provided', () => {
+    mountPlayer()
+
+    expect(document.body.querySelector('[data-testid="radio-intro"]')).toBeNull()
   })
 })

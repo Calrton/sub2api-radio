@@ -12,7 +12,7 @@ import {
   VolumeX,
 } from '@lucide/vue'
 import { shuffleTracks } from '../lib/shuffle'
-import type { RadioTrack } from '../lib/types'
+import type { RadioIntro, RadioTrack } from '../lib/types'
 
 const props = withDefaults(
   defineProps<{
@@ -21,6 +21,7 @@ const props = withDefaults(
     storageKey?: string
     initialVolume?: number
     theme?: 'light' | 'dark'
+    intro?: RadioIntro
   }>(),
   {
     stationName: 'Sub2API Radio',
@@ -36,6 +37,7 @@ const currentIndex = ref(0)
 const isPlaying = ref(false)
 const isOpen = ref(false)
 const controlsHidden = ref(false)
+const showIntro = ref(false)
 const volume = ref(clampVolume(props.initialVolume))
 const previousVolume = ref(clampVolume(props.initialVolume) || 48)
 const currentTime = ref(0)
@@ -58,6 +60,42 @@ const statusText = computed(() => {
 
 function clampVolume(value: number) {
   return Math.min(100, Math.max(0, Math.round(Number.isFinite(value) ? value : 48)))
+}
+
+function introStorageKey() {
+  return `${props.storageKey}:intro`
+}
+
+function shouldShowIntro() {
+  if (!props.intro) return false
+
+  try {
+    return sessionStorage.getItem(introStorageKey()) !== 'seen'
+  } catch {
+    return true
+  }
+}
+
+function markIntroSeen() {
+  showIntro.value = false
+  try {
+    sessionStorage.setItem(introStorageKey(), 'seen')
+  } catch {
+    // The player remains usable when session storage is disabled.
+  }
+}
+
+function enterWithMusic() {
+  markIntroSeen()
+  void nextTick(() => {
+    syncVolume()
+    void playCurrent()
+  })
+}
+
+function enterSilently() {
+  markIntroSeen()
+  audioRef.value?.pause()
 }
 
 function readPreferences() {
@@ -256,6 +294,7 @@ watch(
   () => props.storageKey,
   () => {
     readPreferences()
+    showIntro.value = shouldShowIntro()
     syncVolume()
   },
 )
@@ -272,6 +311,7 @@ watch(
 
 onMounted(() => {
   readPreferences()
+  showIntro.value = shouldShowIntro()
   syncVolume()
   document.addEventListener('keydown', handleKeydown)
 })
@@ -284,6 +324,57 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
+    <Transition name="radio-intro">
+      <section
+        v-if="showIntro && intro"
+        class="radio-intro"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sub2api-radio-intro-title"
+        data-testid="radio-intro"
+      >
+        <div class="radio-intro-card" :class="{ 'has-visual': intro.imageSrc }">
+          <div class="radio-intro-content">
+            <div class="radio-intro-heading">
+              <span class="radio-intro-mark" aria-hidden="true">
+                <Music2 :size="19" />
+              </span>
+              <span class="radio-intro-kicker">{{ intro.kicker || 'CONSOLE RADIO' }}</span>
+            </div>
+            <h2 id="sub2api-radio-intro-title">{{ intro.title }}</h2>
+            <p class="radio-intro-copy">{{ intro.description }}</p>
+            <div class="radio-intro-actions">
+              <button
+                class="radio-intro-primary"
+                type="button"
+                data-testid="radio-intro-play"
+                @click="enterWithMusic"
+              >
+                <Play :size="16" fill="currentColor" aria-hidden="true" />
+                {{ intro.primaryLabel || '开启音乐' }}
+              </button>
+              <button
+                class="radio-intro-secondary"
+                type="button"
+                data-testid="radio-intro-silent"
+                @click="enterSilently"
+              >
+                {{ intro.secondaryLabel || '静音进入' }}
+              </button>
+            </div>
+            <p class="radio-intro-meta">
+              <span class="radio-intro-live" aria-hidden="true"></span>
+              {{ intro.meta || '随机播放 · 随时可换' }}
+            </p>
+          </div>
+          <div v-if="intro.imageSrc" class="radio-intro-visual">
+            <img :src="intro.imageSrc" :alt="intro.imageAlt || ''" />
+            <span class="radio-intro-on-air">ON AIR</span>
+          </div>
+        </div>
+      </section>
+    </Transition>
+
     <div
       class="sub2api-radio"
       :class="{
@@ -489,8 +580,6 @@ onBeforeUnmount(() => {
         </div>
 
         <p v-else class="radio-empty">在组件中传入曲目后即可播放。</p>
-
-        <p class="radio-copyright">示例曲由程序生成；请只使用已取得授权的音频。</p>
       </section>
     </div>
   </Teleport>
@@ -527,6 +616,248 @@ onBeforeUnmount(() => {
   --radio-primary-bright: #5eead4;
   --radio-primary-soft: rgba(20, 184, 166, 0.13);
   --radio-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+
+.radio-intro {
+  --radio-primary: #0f766e;
+  --radio-primary-bright: #14b8a6;
+  --radio-primary-soft: #e5f8f4;
+  --radio-line: rgba(15, 118, 110, 0.14);
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  padding: 24px;
+  place-items: center;
+  background:
+    linear-gradient(125deg, rgb(5 8 12 / 0.9), rgb(9 12 17 / 0.78)),
+    rgba(8, 15, 24, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.radio-intro-card {
+  position: relative;
+  display: grid;
+  width: min(780px, 100%);
+  min-height: 450px;
+  align-items: stretch;
+  overflow: hidden;
+  color: #f8fafc;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 22px;
+  background:
+    linear-gradient(118deg, rgb(20 17 14 / 0.99) 0%, rgb(24 20 16 / 0.98) 58%, rgb(37 27 19 / 0.96) 100%);
+  box-shadow: 0 32px 100px rgb(0 0 0 / 0.56);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.radio-intro-card.has-visual {
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+}
+
+.radio-intro-card::before {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 1px solid rgb(255 255 255 / 0.05);
+  border-radius: inherit;
+  content: '';
+  pointer-events: none;
+}
+
+.radio-intro-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 46px 34px 42px 48px;
+}
+
+.radio-intro-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.radio-intro-mark {
+  display: grid;
+  width: 43px;
+  height: 43px;
+  place-items: center;
+  color: var(--radio-primary-bright);
+  border: 1px solid var(--radio-line);
+  border-radius: 50%;
+  background: var(--radio-primary-soft);
+  box-shadow: inset 0 0 0 5px rgb(255 255 255 / 0.025);
+}
+
+.radio-intro-kicker {
+  margin: 0;
+  color: var(--radio-primary-bright);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+.radio-intro h2 {
+  max-width: 320px;
+  margin: 34px 0 0;
+  font-size: clamp(38px, 6vw, 58px);
+  font-weight: 780;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+
+.radio-intro-copy {
+  max-width: 350px;
+  margin: 18px 0 0;
+  color: rgb(236 231 225 / 0.72);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.radio-intro-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 31px;
+}
+
+.radio-intro-primary,
+.radio-intro-secondary {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 19px;
+  cursor: pointer;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 750;
+  transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.radio-intro-primary {
+  color: rgb(22 17 12);
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, var(--radio-primary-bright), var(--radio-primary));
+  box-shadow: 0 11px 28px rgb(4 47 46 / 0.5);
+}
+
+.radio-intro-secondary {
+  color: rgb(245 242 238 / 0.8);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  background: rgb(255 255 255 / 0.035);
+}
+
+.radio-intro-primary:hover,
+.radio-intro-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.radio-intro-secondary:hover {
+  color: #ffffff;
+  border-color: rgb(255 255 255 / 0.28);
+  background: rgb(255 255 255 / 0.08);
+}
+
+.radio-intro-primary:focus-visible,
+.radio-intro-secondary:focus-visible {
+  outline: 2px solid var(--radio-primary-bright);
+  outline-offset: 3px;
+}
+
+.radio-intro-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0 0;
+  color: rgb(236 231 225 / 0.48);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.radio-intro-live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--radio-primary-bright);
+  box-shadow: 0 0 0 4px var(--radio-primary-soft);
+}
+
+.radio-intro-visual {
+  position: relative;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.radio-intro-visual::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  width: 42%;
+  background: linear-gradient(90deg, rgb(20 17 14) 0%, rgb(20 17 14 / 0.76) 22%, transparent 100%);
+  content: '';
+  pointer-events: none;
+}
+
+.radio-intro-visual::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgb(15 12 10 / 0.08) 45%, rgb(15 12 10 / 0.58) 100%),
+    linear-gradient(90deg, transparent 70%, rgb(15 12 10 / 0.25));
+  content: '';
+  pointer-events: none;
+}
+
+.radio-intro-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 42%;
+  filter: saturate(0.92) contrast(1.03);
+}
+
+.radio-intro-on-air {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  z-index: 3;
+  padding: 7px 9px 6px;
+  color: rgb(255 248 238 / 0.78);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 5px;
+  background: rgb(14 12 10 / 0.34);
+  backdrop-filter: blur(8px);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.radio-intro-enter-active,
+.radio-intro-leave-active {
+  transition: opacity 180ms ease;
+}
+
+.radio-intro-enter-active .radio-intro-card,
+.radio-intro-leave-active .radio-intro-card {
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.radio-intro-enter-from,
+.radio-intro-leave-to {
+  opacity: 0;
+}
+
+.radio-intro-enter-from .radio-intro-card,
+.radio-intro-leave-to .radio-intro-card {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
 }
 
 .radio-controls {
@@ -935,7 +1266,6 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 
-.radio-copyright,
 .radio-empty {
   margin: 0;
   padding: 9px 16px 12px;
@@ -983,6 +1313,65 @@ onBeforeUnmount(() => {
   .radio-station-copy small {
     max-width: 180px;
   }
+
+  .radio-intro {
+    padding: 14px;
+  }
+
+  .radio-intro-card,
+  .radio-intro-card.has-visual {
+    width: min(440px, 100%);
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .radio-intro-visual {
+    min-height: 210px;
+    order: -1;
+  }
+
+  .radio-intro-visual::before {
+    display: none;
+  }
+
+  .radio-intro-visual::after {
+    background:
+      linear-gradient(180deg, rgb(15 12 10 / 0.02) 58%, rgb(20 17 14 / 0.7) 100%),
+      linear-gradient(90deg, transparent 72%, rgb(15 12 10 / 0.18));
+  }
+
+  .radio-intro-visual img {
+    object-position: 50% 31%;
+  }
+
+  .radio-intro-on-air {
+    top: 16px;
+    right: 16px;
+  }
+
+  .radio-intro-content {
+    padding: 27px 24px 26px;
+    background: rgb(20 17 14);
+  }
+
+  .radio-intro h2 {
+    margin-top: 24px;
+    font-size: clamp(34px, 11vw, 46px);
+  }
+
+  .radio-intro-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .radio-intro-primary,
+  .radio-intro-secondary {
+    width: 100%;
+  }
+
+  .radio-intro-meta {
+    margin-top: 19px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -990,13 +1379,100 @@ onBeforeUnmount(() => {
   .radio-fab,
   .radio-tooltip,
   .radio-main-play,
-  .radio-track {
+  .radio-track,
+  .radio-intro,
+  .radio-intro-card {
     transition-duration: 0.001ms;
   }
 
   .radio-bars i {
     animation-duration: 0.001ms;
     animation-iteration-count: 1;
+  }
+}
+
+@media (forced-colors: active) {
+  .radio-intro {
+    background: Canvas;
+  }
+
+  .radio-intro-card,
+  .radio-panel,
+  .radio-fab,
+  .radio-hide,
+  .radio-restore,
+  .radio-intro-primary,
+  .radio-intro-secondary,
+  .radio-main-play,
+  .radio-icon-button,
+  .radio-volume-button {
+    forced-color-adjust: none;
+    color: ButtonText;
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+  }
+
+  .radio-intro-card,
+  .radio-intro-card.has-visual {
+    width: min(430px, 100%);
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .radio-intro-visual,
+  .radio-intro-live {
+    display: none;
+  }
+
+  .radio-intro-content {
+    padding: 34px;
+  }
+
+  .radio-intro-primary,
+  .radio-main-play,
+  .radio-track.is-active .radio-track-action {
+    color: HighlightText;
+    background: Highlight;
+  }
+
+  .radio-intro-kicker,
+  .radio-intro-copy,
+  .radio-intro-meta,
+  .radio-station-copy small,
+  .radio-track-copy small,
+  .radio-now-copy small,
+  .radio-time,
+  .radio-volume-row > span {
+    color: CanvasText;
+  }
+
+  .radio-fab,
+  .radio-main-play,
+  .radio-station-logo,
+  .radio-track-number {
+    forced-color-adjust: none;
+    color: HighlightText;
+    background: Highlight;
+  }
+
+  .radio-tooltip,
+  .radio-track,
+  .radio-track-list,
+  .radio-now-playing,
+  .radio-panel-head {
+    color: CanvasText;
+    border-color: CanvasText;
+    background: Canvas;
+  }
+
+  .radio-track.is-active {
+    border-color: Highlight;
+    background: Canvas;
+  }
+
+  .radio-track.is-active .radio-track-number {
+    color: HighlightText;
+    background: Highlight;
   }
 }
 </style>

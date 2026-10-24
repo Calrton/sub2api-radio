@@ -6,3 +6,14 @@ export interface RadioTrack {
   src: string
   duration?: number
 }
+
+export interface RadioIntro {
+  title: string
+  description: string
+  imageSrc?: string
+  imageAlt?: string
+  kicker?: string
+  primaryLabel?: string
+  secondaryLabel?: string
+  meta?: string
+}
