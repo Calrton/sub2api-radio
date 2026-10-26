@@ -189,6 +189,19 @@ describe('RadioLibrary', () => {
     window.removeEventListener('xihe-radio-updated', updateListener)
   })
 
+  it('allows bundled tracks to be deleted', async () => {
+    mockedListAdminTracks.mockResolvedValue({
+      tracks: [track('bu-shao-xin', false)],
+      stats,
+    })
+    const mounted = await mountLibrary()
+
+    await mounted.get('[data-testid="radio-delete"]').trigger('click')
+    await mounted.get('[data-testid="confirm-delete"]').trigger('click')
+
+    expect(mockedDeleteTrack).toHaveBeenCalledWith('bu-shao-xin')
+  })
+
   it('shows load, upload, and delete errors', async () => {
     mockedListAdminTracks.mockRejectedValueOnce(new Error('load failed'))
     const mounted = await mountLibrary()

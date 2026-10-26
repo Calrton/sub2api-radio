@@ -6923,6 +6923,8 @@
                       :model-value="item.icon_svg"
                       mode="svg"
                       size="sm"
+                      data-testid="custom-menu-icon-upload"
+                      :max-size="100 * 1024"
                       :upload-label="t('admin.settings.customMenu.uploadSvg')"
                       :remove-label="t('admin.settings.customMenu.removeSvg')"
                       @update:model-value="(v: string) => (item.icon_svg = v)"

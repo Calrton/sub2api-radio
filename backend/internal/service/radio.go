@@ -257,10 +257,6 @@ func (l *RadioLibrary) Add(upload RadioUpload) (RadioTrack, error) {
 }
 
 func (l *RadioLibrary) Delete(id string) (RadioTrack, error) {
-	if !validRadioID(id) {
-		return RadioTrack{}, ErrRadioTrackNotFound
-	}
-
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -270,7 +266,7 @@ func (l *RadioLibrary) Delete(id string) (RadioTrack, error) {
 	}
 	index := -1
 	for i, track := range manifest.Tracks {
-		if track.ID == id && track.Uploaded {
+		if track.ID == id {
 			index = i
 			break
 		}
@@ -279,17 +275,20 @@ func (l *RadioLibrary) Delete(id string) (RadioTrack, error) {
 		return RadioTrack{}, ErrRadioTrackNotFound
 	}
 	track := manifest.Tracks[index]
-	if err := l.ensureDirsLocked(); err != nil {
-		return RadioTrack{}, err
-	}
-
-	sourcePath := filepath.Join(l.root, "tracks", id+"."+track.Format)
-	trashPath := filepath.Join(l.root, "trash", id+"."+track.Format+"."+l.now().UTC().Format("20060102150405"))
 	moved := false
-	if err := os.Rename(sourcePath, trashPath); err == nil {
-		moved = true
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return RadioTrack{}, fmt.Errorf("stage radio deletion: %w", err)
+	sourcePath := ""
+	trashPath := ""
+	if track.Uploaded {
+		if err := l.ensureDirsLocked(); err != nil {
+			return RadioTrack{}, err
+		}
+		sourcePath = filepath.Join(l.root, "tracks", id+"."+track.Format)
+		trashPath = filepath.Join(l.root, "trash", id+"."+track.Format+"."+l.now().UTC().Format("20060102150405"))
+		if err := os.Rename(sourcePath, trashPath); err == nil {
+			moved = true
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return RadioTrack{}, fmt.Errorf("stage radio deletion: %w", err)
+		}
 	}
 
 	manifest.Tracks = append(manifest.Tracks[:index], manifest.Tracks[index+1:]...)

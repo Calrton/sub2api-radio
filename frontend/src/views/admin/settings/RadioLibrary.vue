@@ -140,7 +140,6 @@ async function handleFileChange(event: Event) {
 }
 
 function requestDelete(track: RadioTrack) {
-  if (!track.uploaded) return
   stopPreview()
   deleteError.value = ''
   pendingDelete.value = track
@@ -358,7 +357,6 @@ onBeforeUnmount(() => {
             </span>
           </button>
           <button
-            v-if="track.uploaded"
             class="btn btn-secondary btn-sm text-red-600 dark:text-red-400"
             type="button"
             :aria-label="t('admin.settings.radioLibrary.delete')"

@@ -151,6 +151,31 @@ func TestRadioLibraryDeleteRemovesSourceAndTrashFile(t *testing.T) {
 	require.Empty(t, matches)
 }
 
+func TestRadioLibraryDeleteBundledTrackOnlyUpdatesManifest(t *testing.T) {
+	root := t.TempDir()
+	library := NewRadioLibrary(root)
+
+	track, err := library.Delete("bu-shao-xin")
+	require.NoError(t, err)
+	require.Equal(t, "bu-shao-xin", track.ID)
+	require.False(t, track.Uploaded)
+
+	tracks, err := library.Tracks()
+	require.NoError(t, err)
+	require.Len(t, tracks, 6)
+	for _, remaining := range tracks {
+		require.NotEqual(t, "bu-shao-xin", remaining.ID)
+	}
+
+	reopened := NewRadioLibrary(root)
+	tracks, err = reopened.Tracks()
+	require.NoError(t, err)
+	require.Len(t, tracks, 6)
+	for _, remaining := range tracks {
+		require.NotEqual(t, "bu-shao-xin", remaining.ID)
+	}
+}
+
 func TestRadioLibraryCleansOrphanedTrashButKeepsReferencedFiles(t *testing.T) {
 	root := t.TempDir()
 	library := NewRadioLibrary(root)

@@ -352,6 +352,10 @@ const ImageUploadStub = defineComponent({
       type: String,
       default: "",
     },
+    maxSize: {
+      type: Number,
+      default: undefined,
+    },
   },
   setup(props) {
     return () =>
@@ -361,6 +365,7 @@ const ImageUploadStub = defineComponent({
         "data-upload-label": props.uploadLabel,
         "data-remove-label": props.removeLabel,
         "data-placeholder": props.placeholder,
+        "data-max-size": props.maxSize,
       });
   },
 });
@@ -746,6 +751,21 @@ describe("admin SettingsView payment visible method controls", () => {
         { ...menuItems[1], hide_open_button: false },
       ],
     }));
+    wrapper.unmount();
+  });
+
+  it("sets the custom menu SVG uploader limit to 100KB", async () => {
+    getSettings.mockResolvedValue({
+      ...baseSettingsResponse,
+      custom_menu_items: [
+        { id: "docs", label: "Docs", url: "https://example.com/docs", icon_svg: "", visibility: "user", sort_order: 0 },
+      ],
+    });
+    const wrapper = mountView();
+    await flushPromises();
+
+    const customMenuUpload = wrapper.get('[data-testid="custom-menu-icon-upload"]');
+    expect(customMenuUpload.attributes("data-max-size")).toBe(String(100 * 1024));
     wrapper.unmount();
   });
 

@@ -101,7 +101,7 @@ func (h *RadioHandler) Upload(c *gin.Context) {
 	response.Created(c, track)
 }
 
-// Delete removes an uploaded track. Bundled tracks cannot be deleted.
+// Delete removes a track from the active radio library.
 // DELETE /api/v1/admin/radio/tracks/:id
 func (h *RadioHandler) Delete(c *gin.Context) {
 	track, err := h.library.Delete(c.Param("id"))

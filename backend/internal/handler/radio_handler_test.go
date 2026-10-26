@@ -103,7 +103,7 @@ func TestRadioHandlerRejectsForgedFile(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, recorder.Code)
 }
 
-func TestRadioHandlerDeleteRejectsBundledTrack(t *testing.T) {
+func TestRadioHandlerDeletesBundledTrack(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewRadioHandler(service.NewRadioLibrary(t.TempDir()))
 	c, recorder := newRadioTestContext(http.MethodDelete, "/api/v1/admin/radio/tracks/bu-shao-xin", nil, "")
@@ -111,7 +111,21 @@ func TestRadioHandlerDeleteRejectsBundledTrack(t *testing.T) {
 
 	h.Delete(c)
 
-	require.Equal(t, http.StatusNotFound, recorder.Code)
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+	listContext, listRecorder := newRadioTestContext(http.MethodGet, "/api/v1/admin/radio/tracks", nil, "")
+	h.AdminList(listContext)
+	require.Equal(t, http.StatusOK, listRecorder.Code)
+	var payload struct {
+		Data struct {
+			Tracks []service.RadioTrack `json:"tracks"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(listRecorder.Body.Bytes(), &payload))
+	require.Len(t, payload.Data.Tracks, 6)
+	for _, track := range payload.Data.Tracks {
+		require.NotEqual(t, "bu-shao-xin", track.ID)
+	}
 }
 
 func TestRadioHandlerStatsCountBundledTracks(t *testing.T) {
