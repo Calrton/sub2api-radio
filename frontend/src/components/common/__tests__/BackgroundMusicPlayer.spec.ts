@@ -249,13 +249,19 @@ describe('BackgroundMusicPlayer', () => {
     )
 
     expect(styles).toMatch(
-      /\.xihe-bgm-root\s*\{[^}]*right:\s*env\(safe-area-inset-right,\s*0px\)/s,
+      /\.xihe-bgm-root\s*\{[^}]*--bgm-edge-gap:\s*8px;[^}]*right:\s*calc\(env\(safe-area-inset-right,\s*0px\)\s*\+\s*var\(--bgm-edge-gap\)\)/s,
     )
     expect(styles).toMatch(
-      /\.bgm-restore\s*\{[^}]*right:\s*0;[^}]*width:\s*34px;[^}]*border-right:\s*0;/s,
+      /\.bgm-restore\s*\{[^}]*right:\s*0;[^}]*width:\s*52px;[^}]*height:\s*52px;[^}]*border-right:\s*0;/s,
     )
     expect(styles).toMatch(
-      /@media \(max-width: 640px\)\s*\{[\s\S]*?\.xihe-bgm-root\s*\{[^}]*right:\s*env\(safe-area-inset-right,\s*0px\)/,
+      /@media \(max-width: 640px\)\s*\{[\s\S]*?\.xihe-bgm-root\s*\{[^}]*--bgm-edge-gap:\s*6px;[^}]*right:\s*calc\(env\(safe-area-inset-right,\s*0px\)\s*\+\s*var\(--bgm-edge-gap\)\)/,
+    )
+    expect(styles).toMatch(
+      /\.xihe-bgm-root\.is-hidden\s*\{[^}]*pointer-events:\s*none;/s,
+    )
+    expect(styles).toMatch(
+      /\.xihe-bgm-root\.is-hidden\s+\.bgm-restore\s*\{[^}]*pointer-events:\s*auto;/s,
     )
   })
 })

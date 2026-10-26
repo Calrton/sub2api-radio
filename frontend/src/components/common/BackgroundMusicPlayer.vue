@@ -1121,6 +1121,14 @@ onBeforeUnmount(() => {
   transform: translateY(8px);
 }
 
+.xihe-bgm-root.is-hidden {
+  pointer-events: none;
+}
+
+.xihe-bgm-root.is-hidden .bgm-restore {
+  pointer-events: auto;
+}
+
 .bgm-fab {
   position: relative;
   display: grid;
@@ -1188,15 +1196,15 @@ onBeforeUnmount(() => {
   right: 0;
   bottom: 0;
   display: grid;
-  width: 34px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   place-items: center;
   padding: 0;
   cursor: pointer;
   color: var(--bgm-muted);
   border: 1px solid var(--bgm-line);
   border-right: 0;
-  border-radius: 9px 0 0 9px;
+  border-radius: 10px 0 0 10px;
   background: var(--bgm-solid);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.13);
   font-size: 11px;
@@ -1214,8 +1222,8 @@ onBeforeUnmount(() => {
 }
 
 .bgm-restore .bgm-icon {
-  width: 17px;
-  height: 17px;
+  width: 20px;
+  height: 20px;
 }
 
 .bgm-panel {
