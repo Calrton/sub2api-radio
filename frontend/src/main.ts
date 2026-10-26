@@ -6,6 +6,7 @@ import i18n, { initI18n } from './i18n'
 import { useAppStore } from '@/stores/app'
 import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
+import { applySiteTheme, loadStoredSiteTheme } from '@/utils/siteTheme'
 import './style.css'
 
 function initIOSViewportZoomFix() {
@@ -30,10 +31,27 @@ function initThemeClass() {
   document.documentElement.classList.toggle('dark', shouldUseDark)
 }
 
+async function waitForPrimaryFont(): Promise<void> {
+  const primaryFont = document.documentElement.dataset.siteFont
+  if (primaryFont !== 'geist' || typeof document.fonts === 'undefined') return
+
+  try {
+    await Promise.all([
+      document.fonts.load('400 16px Geist'),
+      document.fonts.load('500 16px Geist'),
+      document.fonts.load('700 16px Geist'),
+    ])
+  } catch {
+    // Font loading must not block the application.
+  }
+}
+
 async function bootstrap() {
   // Apply theme class globally before app mount to keep all routes consistent.
   initThemeClass()
   initIOSViewportZoomFix()
+  const storedTheme = loadStoredSiteTheme()
+  applySiteTheme(storedTheme)
 
   const app = createApp(App)
   const pinia = createPinia()
@@ -43,6 +61,14 @@ async function bootstrap() {
   // This must happen after pinia is installed but before router and i18n
   const appStore = useAppStore()
   appStore.initFromInjectedConfig()
+  applySiteTheme({
+    primaryColor: appStore.sitePrimaryColor,
+    darkBorderMode: appStore.siteDarkBorderMode,
+    fontFamily: appStore.siteFontFamily,
+    fontScale: appStore.siteFontScale,
+    textColorLight: appStore.siteTextColorLight,
+    textColorDark: appStore.siteTextColorDark,
+  })
 
   // Set document title immediately after config is loaded
   if (appStore.siteName && appStore.siteName !== 'Sub2API') {
@@ -50,7 +76,7 @@ async function bootstrap() {
   }
   updateFavicon(appStore.siteLogo)
 
-  await initI18n()
+  await Promise.all([initI18n(), waitForPrimaryFont()])
 
   app.use(router)
   app.use(i18n)

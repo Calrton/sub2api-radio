@@ -5,19 +5,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // 主色调 - Teal/Cyan 青色系
+        // 主色调由站点设置运行时注入；默认值见 src/utils/siteTheme.ts
         primary: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
-          950: '#042f2e'
+          50: 'rgb(var(--primary-50, 247 242 234) / <alpha-value>)',
+          100: 'rgb(var(--primary-100, 242 229 211) / <alpha-value>)',
+          200: 'rgb(var(--primary-200, 232 207 177) / <alpha-value>)',
+          300: 'rgb(var(--primary-300, 219 179 139) / <alpha-value>)',
+          400: 'rgb(var(--primary-400, 203 147 94) / <alpha-value>)',
+          500: 'rgb(var(--primary-500, 176 111 48) / <alpha-value>)',
+          600: 'rgb(var(--primary-600, 151 91 35) / <alpha-value>)',
+          700: 'rgb(var(--primary-700, 124 72 24) / <alpha-value>)',
+          800: 'rgb(var(--primary-800, 96 56 21) / <alpha-value>)',
+          900: 'rgb(var(--primary-900, 70 41 18) / <alpha-value>)',
+          950: 'rgb(var(--primary-950, 38 23 12) / <alpha-value>)'
         },
         // 辅助色 - 深蓝灰
         accent: {
@@ -50,16 +50,7 @@ export default {
       },
       fontFamily: {
         sans: [
-          'system-ui',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
-          'PingFang SC',
-          'Hiragino Sans GB',
-          'Microsoft YaHei',
+          'var(--site-font-family)',
           'sans-serif'
         ],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
@@ -67,20 +58,21 @@ export default {
       boxShadow: {
         glass: '0 8px 32px rgba(0, 0, 0, 0.08)',
         'glass-sm': '0 4px 16px rgba(0, 0, 0, 0.06)',
-        glow: '0 0 20px rgba(20, 184, 166, 0.25)',
-        'glow-lg': '0 0 40px rgba(20, 184, 166, 0.35)',
+        glow: '0 0 20px rgb(var(--primary-500, 176 111 48) / 0.25)',
+        'glow-lg': '0 0 40px rgb(var(--primary-500, 176 111 48) / 0.35)',
         card: '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
         'card-hover': '0 10px 40px rgba(0, 0, 0, 0.08)',
         'inner-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.1)'
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-primary': 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+        'gradient-primary':
+          'linear-gradient(135deg, rgb(var(--primary-500, 176 111 48)) 0%, rgb(var(--primary-600, 151 91 35)) 100%)',
         'gradient-dark': 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
         'gradient-glass':
           'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
         'mesh-gradient':
-          'radial-gradient(at 40% 20%, rgba(20, 184, 166, 0.12) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(20, 184, 166, 0.08) 0px, transparent 50%)'
+          'radial-gradient(at 40% 20%, rgb(var(--primary-500, 176 111 48) / 0.12) 0px, transparent 50%), radial-gradient(at 80% 0%, rgb(var(--primary-400, 203 147 94) / 0.08) 0px, transparent 50%), radial-gradient(at 0% 50%, rgb(var(--primary-500, 176 111 48) / 0.08) 0px, transparent 50%)'
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
@@ -118,8 +110,8 @@ export default {
           '100%': { backgroundPosition: '200% 0' }
         },
         glow: {
-          '0%': { boxShadow: '0 0 20px rgba(20, 184, 166, 0.25)' },
-          '100%': { boxShadow: '0 0 30px rgba(20, 184, 166, 0.4)' }
+          '0%': { boxShadow: '0 0 20px rgb(var(--primary-500, 176 111 48) / 0.25)' },
+          '100%': { boxShadow: '0 0 30px rgb(var(--primary-500, 176 111 48) / 0.4)' }
         }
       },
       backdropBlur: {

@@ -11,6 +11,7 @@ import type {
   NotifyEmailEntry,
 } from "@/types";
 import type { RechargeBonusTier } from "@/utils/rechargeBonus";
+import type { DarkBorderMode, SiteFontFamily } from "@/utils/siteTheme";
 
 export interface DefaultSubscriptionSetting {
   group_id: number;
@@ -480,6 +481,12 @@ export interface SystemSettings {
   site_name: string;
   site_logo: string;
   site_subtitle: string;
+  site_primary_color: string;
+  site_dark_border_mode: DarkBorderMode;
+  site_font_family: SiteFontFamily;
+  site_font_scale: number;
+  site_text_color_light: string;
+  site_text_color_dark: string;
   api_base_url: string;
   contact_info: string;
   doc_url: string;
@@ -832,6 +839,12 @@ export interface UpdateSettingsRequest {
   site_name?: string;
   site_logo?: string;
   site_subtitle?: string;
+  site_primary_color?: string;
+  site_dark_border_mode?: DarkBorderMode;
+  site_font_family?: SiteFontFamily;
+  site_font_scale?: number;
+  site_text_color_light?: string;
+  site_text_color_dark?: string;
   api_base_url?: string;
   contact_info?: string;
   doc_url?: string;

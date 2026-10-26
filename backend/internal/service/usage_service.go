@@ -298,6 +298,22 @@ func (s *UsageService) GetUserDashboardStats(ctx context.Context, userID int64) 
 	return stats, nil
 }
 
+// GetPublicUserRanking returns the bounded ranking shown to authenticated users.
+func (s *UsageService) GetPublicUserRanking(ctx context.Context, startTime, endTime time.Time, limit int) (*usagestats.PublicUserRankingResponse, error) {
+	type publicRankingRepo interface {
+		GetPublicUserRanking(ctx context.Context, startTime, endTime time.Time, limit int) (*usagestats.PublicUserRankingResponse, error)
+	}
+	repo, ok := s.usageRepo.(publicRankingRepo)
+	if !ok {
+		return nil, fmt.Errorf("get public user ranking: repository does not support ranking")
+	}
+	ranking, err := repo.GetPublicUserRanking(ctx, startTime, endTime, limit)
+	if err != nil {
+		return nil, fmt.Errorf("get public user ranking: %w", err)
+	}
+	return ranking, nil
+}
+
 // GetAPIKeyDashboardStats returns dashboard summary stats filtered by API Key.
 func (s *UsageService) GetAPIKeyDashboardStats(ctx context.Context, apiKeyID int64) (*usagestats.UserDashboardStats, error) {
 	stats, err := s.usageRepo.GetAPIKeyDashboardStats(ctx, apiKeyID)

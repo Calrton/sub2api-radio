@@ -23,6 +23,35 @@ func normalizeLoginAgreementMode(raw string) string {
 	}
 }
 
+func normalizeSiteFontFamily(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "geist":
+		return "geist"
+	case "microsoft-yahei":
+		return "microsoft-yahei"
+	default:
+		return "system"
+	}
+}
+
+func normalizeSiteFontScale(raw string) int {
+	value, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil || value < 85 || value > 115 {
+		return 100
+	}
+	return value
+}
+
+func normalizeSiteHexColor(raw, fallback string) string {
+	value := strings.ToUpper(strings.TrimSpace(raw))
+	if len(value) == 7 && value[0] == '#' {
+		if _, err := strconv.ParseUint(value[1:], 16, 32); err == nil {
+			return value
+		}
+	}
+	return fallback
+}
+
 func defaultLoginAgreementDocuments() []LoginAgreementDocument {
 	return []LoginAgreementDocument{
 		{
@@ -183,6 +212,12 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeySiteName,
 		SettingKeySiteLogo,
 		SettingKeySiteSubtitle,
+		SettingKeySitePrimaryColor,
+		SettingKeySiteDarkBorderMode,
+		SettingKeySiteFontFamily,
+		SettingKeySiteFontScale,
+		SettingKeySiteTextColorLight,
+		SettingKeySiteTextColorDark,
 		SettingKeyAPIBaseURL,
 		SettingKeyContactInfo,
 		SettingKeyDocURL,
@@ -327,6 +362,12 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SiteName:                            s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
 		SiteLogo:                            settings[SettingKeySiteLogo],
 		SiteSubtitle:                        s.getStringOrDefault(settings, SettingKeySiteSubtitle, "Subscription to API Conversion Platform"),
+		SitePrimaryColor:                    s.getStringOrDefault(settings, SettingKeySitePrimaryColor, "#B06F30"),
+		SiteDarkBorderMode:                  s.getStringOrDefault(settings, SettingKeySiteDarkBorderMode, "accent"),
+		SiteFontFamily:                      normalizeSiteFontFamily(s.getStringOrDefault(settings, SettingKeySiteFontFamily, "system")),
+		SiteFontScale:                       normalizeSiteFontScale(s.getStringOrDefault(settings, SettingKeySiteFontScale, "100")),
+		SiteTextColorLight:                  normalizeSiteHexColor(s.getStringOrDefault(settings, SettingKeySiteTextColorLight, "#111827"), "#111827"),
+		SiteTextColorDark:                   normalizeSiteHexColor(s.getStringOrDefault(settings, SettingKeySiteTextColorDark, "#F3F4F6"), "#F3F4F6"),
 		APIBaseURL:                          settings[SettingKeyAPIBaseURL],
 		ContactInfo:                         settings[SettingKeyContactInfo],
 		DocURL:                              settings[SettingKeyDocURL],
@@ -586,6 +627,12 @@ type PublicSettingsInjectionPayload struct {
 	SiteName                            string                   `json:"site_name"`
 	SiteLogo                            string                   `json:"site_logo"`
 	SiteSubtitle                        string                   `json:"site_subtitle"`
+	SitePrimaryColor                    string                   `json:"site_primary_color"`
+	SiteDarkBorderMode                  string                   `json:"site_dark_border_mode"`
+	SiteFontFamily                      string                   `json:"site_font_family"`
+	SiteFontScale                       int                      `json:"site_font_scale"`
+	SiteTextColorLight                  string                   `json:"site_text_color_light"`
+	SiteTextColorDark                   string                   `json:"site_text_color_dark"`
 	APIBaseURL                          string                   `json:"api_base_url"`
 	ContactInfo                         string                   `json:"contact_info"`
 	DocURL                              string                   `json:"doc_url"`
@@ -680,6 +727,12 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		SiteName:                            settings.SiteName,
 		SiteLogo:                            settings.SiteLogo,
 		SiteSubtitle:                        settings.SiteSubtitle,
+		SitePrimaryColor:                    settings.SitePrimaryColor,
+		SiteDarkBorderMode:                  settings.SiteDarkBorderMode,
+		SiteFontFamily:                      settings.SiteFontFamily,
+		SiteFontScale:                       settings.SiteFontScale,
+		SiteTextColorLight:                  settings.SiteTextColorLight,
+		SiteTextColorDark:                   settings.SiteTextColorDark,
 		APIBaseURL:                          settings.APIBaseURL,
 		ContactInfo:                         settings.ContactInfo,
 		DocURL:                              settings.DocURL,

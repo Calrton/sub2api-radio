@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
@@ -15,6 +17,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/service"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/singleflight"
 )
 
 type userUsageFilters struct {
@@ -50,7 +53,32 @@ type UsageHandler struct {
 	apiKeyService  *service.APIKeyService
 	opsService     *service.OpsService
 	settingService *service.SettingService
+
+	rankingCache  sync.Map
+	rankingFlight singleflight.Group
 }
+
+type publicUserRankingItem struct {
+	Email        string `json:"email"`
+	Requests     int64  `json:"requests"`
+	InputTokens  int64  `json:"input_tokens"`
+	OutputTokens int64  `json:"output_tokens"`
+	CacheTokens  int64  `json:"cache_tokens"`
+	TotalTokens  int64  `json:"total_tokens"`
+}
+
+type publicUserRankingResponse struct {
+	Ranking   []publicUserRankingItem `json:"ranking"`
+	StartDate string                  `json:"start_date"`
+	EndDate   string                  `json:"end_date"`
+}
+
+type publicUserRankingCacheEntry struct {
+	response  *usagestats.PublicUserRankingResponse
+	expiresAt time.Time
+}
+
+const publicUserRankingCacheTTL = 5 * time.Minute
 
 // NewUsageHandler creates a new UsageHandler
 func NewUsageHandler(
@@ -462,6 +490,154 @@ func (h *UsageHandler) DashboardStats(c *gin.Context) {
 	}
 
 	response.Success(c, stats)
+}
+
+// GetUserRanking returns the authenticated user's view of the recent usage ranking.
+// GET /api/v1/usage/users-ranking
+func (h *UsageHandler) GetUserRanking(c *gin.Context) {
+	_, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+
+	period, ok := parseUserRankingPeriod(c.Query("period"))
+	if !ok {
+		response.BadRequest(c, "Invalid period, use daily or weekly")
+		return
+	}
+	limit, ok := parseUserRankingLimit(c.Query("limit"))
+	if !ok {
+		response.BadRequest(c, "Invalid limit, use a number between 1 and 20")
+		return
+	}
+
+	userTZ := strings.TrimSpace(c.Query("timezone"))
+	now := timezone.NowInUserLocation(userTZ)
+	startTime, endTime := userRankingWindow(now, period, userTZ)
+
+	cacheKey := fmt.Sprintf("%s|%d|%d|%d", period, startTime.Unix(), endTime.Unix(), limit)
+	base, err := h.getCachedPublicUserRanking(cacheKey, func() (*usagestats.PublicUserRankingResponse, error) {
+		return h.usageService.GetPublicUserRanking(c.Request.Context(), startTime, endTime, limit)
+	})
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	items := make([]publicUserRankingItem, 0, len(base.Ranking))
+	for _, row := range base.Ranking {
+		items = append(items, publicUserRankingItem{
+			Email:        maskRankingEmail(row.Email),
+			Requests:     row.Requests,
+			InputTokens:  row.InputTokens,
+			OutputTokens: row.OutputTokens,
+			CacheTokens:  row.CacheCreateTokens + row.CacheReadTokens,
+			TotalTokens:  row.TotalTokens,
+		})
+	}
+
+	response.Success(c, publicUserRankingResponse{
+		Ranking:   items,
+		StartDate: startTime.Format("2006-01-02"),
+		EndDate:   endTime.AddDate(0, 0, -1).Format("2006-01-02"),
+	})
+}
+
+func (h *UsageHandler) getCachedPublicUserRanking(cacheKey string, load func() (*usagestats.PublicUserRankingResponse, error)) (*usagestats.PublicUserRankingResponse, error) {
+	if value, ok := h.rankingCache.Load(cacheKey); ok {
+		entry, valid := value.(publicUserRankingCacheEntry)
+		if valid && time.Now().Before(entry.expiresAt) {
+			return entry.response, nil
+		}
+		h.rankingCache.Delete(cacheKey)
+	}
+
+	value, err, _ := h.rankingFlight.Do(cacheKey, func() (any, error) {
+		if cached, ok := h.rankingCache.Load(cacheKey); ok {
+			entry, valid := cached.(publicUserRankingCacheEntry)
+			if valid && time.Now().Before(entry.expiresAt) {
+				return entry.response, nil
+			}
+		}
+		loaded, loadErr := load()
+		if loadErr != nil {
+			return nil, loadErr
+		}
+		h.rankingCache.Store(cacheKey, publicUserRankingCacheEntry{
+			response:  loaded,
+			expiresAt: time.Now().Add(publicUserRankingCacheTTL),
+		})
+		return loaded, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	ranking, ok := value.(*usagestats.PublicUserRankingResponse)
+	if !ok {
+		return nil, fmt.Errorf("unexpected public user ranking cache type")
+	}
+	return ranking, nil
+}
+
+func parseUserRankingPeriod(raw string) (string, bool) {
+	switch strings.TrimSpace(raw) {
+	case "", "daily":
+		return "daily", true
+	case "weekly":
+		return "weekly", true
+	default:
+		return "", false
+	}
+}
+
+func parseUserRankingLimit(raw string) (int, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 20, true
+	}
+	limit, err := strconv.Atoi(raw)
+	if err != nil || limit <= 0 || limit > 20 {
+		return 0, false
+	}
+	return limit, true
+}
+
+func userRankingWindow(now time.Time, period, userTZ string) (time.Time, time.Time) {
+	days := 1
+	if period == "weekly" {
+		days = 7
+	}
+	start := timezone.StartOfDayInUserLocation(now.AddDate(0, 0, -(days-1)), userTZ)
+	end := timezone.StartOfDayInUserLocation(now.AddDate(0, 0, 1), userTZ)
+	return start, end
+}
+
+func maskRankingEmail(raw string) string {
+	email := strings.TrimSpace(raw)
+	if email == "" {
+		return "匿名用户"
+	}
+	at := strings.LastIndex(email, "@")
+	if at <= 0 || at == len(email)-1 {
+		return maskRankingName(email)
+	}
+	local := []rune(email[:at])
+	if len(local) < 2 {
+		return string(local[:1]) + "***" + email[at:]
+	}
+	return string(local[:2]) + "***" + email[at:]
+}
+
+func maskRankingName(raw string) string {
+	name := []rune(strings.TrimSpace(raw))
+	if len(name) == 0 {
+		return "匿名用户"
+	}
+	if len(name) == 1 {
+		return "*"
+	}
+	return string(name[:1]) + strings.Repeat("*", len(name)-1)
 }
 
 // DashboardTrend handles getting user usage trend data

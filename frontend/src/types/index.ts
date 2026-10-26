@@ -2,6 +2,8 @@
  * Core Type Definitions for Sub2API Frontend
  */
 
+import type { DarkBorderMode, SiteFontFamily } from '@/utils/siteTheme'
+
 // ==================== Common Types ====================
 
 export interface SelectOption {
@@ -192,6 +194,7 @@ export interface CustomMenuItem {
   url: string
   page_slug?: string
   hide_open_button?: boolean
+  open_in_new_tab?: boolean
   visibility: 'user' | 'admin'
   sort_order: number
 }
@@ -235,6 +238,12 @@ export interface PublicSettings {
   site_name: string
   site_logo: string
   site_subtitle: string
+  site_primary_color: string
+  site_dark_border_mode: DarkBorderMode
+  site_font_family: SiteFontFamily
+  site_font_scale: number
+  site_text_color_light: string
+  site_text_color_dark: string
   api_base_url: string
   contact_info: string
   doc_url: string

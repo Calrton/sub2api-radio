@@ -152,6 +152,12 @@ type SystemSettings struct {
 	SiteName                    string           `json:"site_name"`
 	SiteLogo                    string           `json:"site_logo"`
 	SiteSubtitle                string           `json:"site_subtitle"`
+	SitePrimaryColor            string           `json:"site_primary_color"`
+	SiteDarkBorderMode          string           `json:"site_dark_border_mode"`
+	SiteFontFamily              string           `json:"site_font_family"`
+	SiteFontScale               int              `json:"site_font_scale"`
+	SiteTextColorLight          string           `json:"site_text_color_light"`
+	SiteTextColorDark           string           `json:"site_text_color_dark"`
 	APIBaseURL                  string           `json:"api_base_url"`
 	ContactInfo                 string           `json:"contact_info"`
 	DocURL                      string           `json:"doc_url"`
@@ -392,6 +398,12 @@ type PublicSettings struct {
 	SiteName                            string                   `json:"site_name"`
 	SiteLogo                            string                   `json:"site_logo"`
 	SiteSubtitle                        string                   `json:"site_subtitle"`
+	SitePrimaryColor                    string                   `json:"site_primary_color"`
+	SiteDarkBorderMode                  string                   `json:"site_dark_border_mode"`
+	SiteFontFamily                      string                   `json:"site_font_family"`
+	SiteFontScale                       int                      `json:"site_font_scale"`
+	SiteTextColorLight                  string                   `json:"site_text_color_light"`
+	SiteTextColorDark                   string                   `json:"site_text_color_dark"`
 	APIBaseURL                          string                   `json:"api_base_url"`
 	ContactInfo                         string                   `json:"contact_info"`
 	DocURL                              string                   `json:"doc_url"`

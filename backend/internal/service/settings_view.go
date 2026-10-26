@@ -152,6 +152,12 @@ type SystemSettings struct {
 	SiteName                    string
 	SiteLogo                    string
 	SiteSubtitle                string
+	SitePrimaryColor            string
+	SiteDarkBorderMode          string
+	SiteFontFamily              string
+	SiteFontScale               int
+	SiteTextColorLight          string
+	SiteTextColorDark           string
 	APIBaseURL                  string
 	ContactInfo                 string
 	DocURL                      string
@@ -354,6 +360,12 @@ type PublicSettings struct {
 	SiteName                            string
 	SiteLogo                            string
 	SiteSubtitle                        string
+	SitePrimaryColor                    string
+	SiteDarkBorderMode                  string
+	SiteFontFamily                      string
+	SiteFontScale                       int
+	SiteTextColorLight                  string
+	SiteTextColorDark                   string
 	APIBaseURL                          string
 	ContactInfo                         string
 	DocURL                              string

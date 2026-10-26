@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 @layer base {
   * {
     @apply border-gray-200 dark:border-dark-700;
@@ -10,6 +18,8 @@
   html {
     @apply scroll-smooth antialiased;
     color-scheme: light;
+    font-family: var(--site-font-family);
+    font-size: var(--site-font-scale, 100%);
   }
 
   .dark {
@@ -17,8 +27,13 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-dark-950 dark:text-gray-100;
+    @apply bg-gray-50 dark:bg-dark-950;
     @apply min-h-screen;
+    color: var(--site-text-color-light, #111827);
+  }
+
+  .dark body {
+    color: var(--site-text-color-dark, #f3f4f6);
   }
 
   /* 自定义滚动条 - 仅针对 Firefox，避免 Chrome 取消 webkit 的全局定制 */
@@ -80,6 +95,7 @@
   }
 
   .btn-primary {
+    @apply bg-primary-600;
     @apply bg-gradient-to-r from-primary-500 to-primary-600;
     @apply text-white shadow-md shadow-primary-500/25;
     @apply hover:from-primary-600 hover:to-primary-700 hover:shadow-lg hover:shadow-primary-500/30;
@@ -748,6 +764,80 @@
 }
 
 @layer utilities {
+  /* Body color controls neutral copy only. Derived shades preserve text hierarchy. */
+  :root:not(.dark) .text-gray-900 {
+    color: var(--site-text-color-light, #111827);
+  }
+
+  :root:not(.dark) .text-gray-800 {
+    color: var(--site-text-color-light-90, #27303f);
+  }
+
+  :root:not(.dark) .text-gray-700 {
+    color: var(--site-text-color-light-78, #4b5563);
+  }
+
+  :root:not(.dark) .text-gray-600 {
+    color: var(--site-text-color-light-65, #6b7280);
+  }
+
+  :root:not(.dark) .text-gray-500 {
+    color: var(--site-text-color-light-52, #9ca3af);
+  }
+
+  .dark .text-dark-100,
+  .dark .text-gray-100,
+  .dark .dark\:text-dark-100,
+  .dark .dark\:text-gray-100 {
+    color: var(--site-text-color-dark, #f3f4f6);
+  }
+
+  .dark .text-dark-200,
+  .dark .text-gray-200,
+  .dark .dark\:text-dark-200,
+  .dark .dark\:text-gray-200 {
+    color: var(--site-text-color-dark-90, #dce0e8);
+  }
+
+  .dark .text-dark-300,
+  .dark .text-gray-300,
+  .dark .dark\:text-dark-300,
+  .dark .dark\:text-gray-300 {
+    color: var(--site-text-color-dark-78, #bdc3cf);
+  }
+
+  .dark .text-dark-400,
+  .dark .text-gray-400,
+  .dark .dark\:text-dark-400,
+  .dark .dark\:text-gray-400 {
+    color: var(--site-text-color-dark-65, #a1a9b7);
+  }
+
+  .dark .text-dark-500,
+  .dark .text-gray-500,
+  .dark .dark\:text-dark-500,
+  .dark .dark\:text-gray-500 {
+    color: var(--site-text-color-dark-52, #818b9b);
+  }
+
+  /* The admin color picker controls dark-mode edge contrast without
+     changing the dark surface palette. */
+  .dark .border-dark-600 {
+    border-color: rgb(var(--dark-border-rgb, 203 213 225) / 0.24);
+  }
+
+  .dark .border-dark-700 {
+    border-color: rgb(var(--dark-border-rgb, 203 213 225) / 0.16);
+  }
+
+  .dark .divide-dark-600 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgb(var(--dark-border-rgb, 203 213 225) / 0.24);
+  }
+
+  .dark .divide-dark-700 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgb(var(--dark-border-rgb, 203 213 225) / 0.16);
+  }
+
   /* 文字渐变 */
   .text-gradient {
     @apply bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent;
@@ -774,5 +864,42 @@
 
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (forced-colors: active) {
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-success,
+  .btn-warning {
+    forced-color-adjust: none;
+    color: ButtonText;
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+  }
+
+  .btn-primary {
+    color: HighlightText;
+    border-color: Highlight;
+    background: Highlight;
+  }
+
+  .home-feature-icon {
+    box-sizing: border-box;
+    forced-color-adjust: none;
+    color: HighlightText;
+    border: 1px solid Highlight;
+    background: Highlight;
+  }
+
+  .home-feature-icon svg {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    forced-color-adjust: none;
+    color: HighlightText;
+    stroke: currentColor;
   }
 }

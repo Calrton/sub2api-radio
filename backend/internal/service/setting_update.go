@@ -339,6 +339,12 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 	updates[SettingKeySiteName] = settings.SiteName
 	updates[SettingKeySiteLogo] = settings.SiteLogo
 	updates[SettingKeySiteSubtitle] = settings.SiteSubtitle
+	updates[SettingKeySitePrimaryColor] = settings.SitePrimaryColor
+	updates[SettingKeySiteDarkBorderMode] = settings.SiteDarkBorderMode
+	updates[SettingKeySiteFontFamily] = settings.SiteFontFamily
+	updates[SettingKeySiteFontScale] = strconv.Itoa(settings.SiteFontScale)
+	updates[SettingKeySiteTextColorLight] = settings.SiteTextColorLight
+	updates[SettingKeySiteTextColorDark] = settings.SiteTextColorDark
 	updates[SettingKeyAPIBaseURL] = settings.APIBaseURL
 	updates[SettingKeyContactInfo] = settings.ContactInfo
 	updates[SettingKeyDocURL] = settings.DocURL

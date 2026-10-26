@@ -326,6 +326,24 @@ func diffSettings(before *service.SystemSettings, after *service.SystemSettings,
 	if before.SiteSubtitle != after.SiteSubtitle {
 		changed = append(changed, "site_subtitle")
 	}
+	if before.SitePrimaryColor != after.SitePrimaryColor {
+		changed = append(changed, "site_primary_color")
+	}
+	if before.SiteDarkBorderMode != after.SiteDarkBorderMode {
+		changed = append(changed, "site_dark_border_mode")
+	}
+	if before.SiteFontFamily != after.SiteFontFamily {
+		changed = append(changed, "site_font_family")
+	}
+	if before.SiteFontScale != after.SiteFontScale {
+		changed = append(changed, "site_font_scale")
+	}
+	if before.SiteTextColorLight != after.SiteTextColorLight {
+		changed = append(changed, "site_text_color_light")
+	}
+	if before.SiteTextColorDark != after.SiteTextColorDark {
+		changed = append(changed, "site_text_color_dark")
+	}
 	if before.APIBaseURL != after.APIBaseURL {
 		changed = append(changed, "api_base_url")
 	}

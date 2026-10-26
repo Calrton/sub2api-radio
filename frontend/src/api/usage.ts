@@ -118,6 +118,29 @@ export interface UsageDashboardSnapshotV2Response {
   groups?: GroupStat[]
 }
 
+export type UserRankingPeriod = 'daily' | 'weekly'
+
+export interface UserRankingParams {
+  period: UserRankingPeriod
+  limit: number
+  timezone: string
+}
+
+export interface UserRankingEntry {
+  email: string
+  requests: number
+  input_tokens: number
+  output_tokens: number
+  cache_tokens: number
+  total_tokens: number
+}
+
+export interface UserRankingResponse {
+  ranking: UserRankingEntry[]
+  start_date: string
+  end_date: string
+}
+
 /**
  * List usage logs with optional filters
  * @param page - Page number (default: 1)
@@ -322,6 +345,15 @@ export async function getDashboardSnapshotV2(
   return data
 }
 
+export async function getUserRanking(
+  params: UserRankingParams
+): Promise<UserRankingResponse> {
+  const { data } = await apiClient.get<UserRankingResponse>('/usage/users-ranking', {
+    params
+  })
+  return data
+}
+
 export interface BatchApiKeyUsageStats {
   api_key_id: number
   today_actual_cost: number
@@ -384,6 +416,7 @@ export const usageAPI = {
   getMyApiKeyDailyUsage,
   getDashboardSnapshotV2,
   getDashboardApiKeysUsage,
+  getUserRanking,
   // Error requests
   listMyErrorRequests,
   getMyErrorDetail

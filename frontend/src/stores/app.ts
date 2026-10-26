@@ -13,6 +13,17 @@ import {
   type ReleaseInfo
 } from '@/api/admin/system'
 import { getPublicSettings as fetchPublicSettingsAPI } from '@/api/auth'
+import {
+  DEFAULT_SITE_FONT_FAMILY,
+  DEFAULT_SITE_FONT_SCALE,
+  DEFAULT_SITE_TEXT_COLOR_DARK,
+  DEFAULT_SITE_TEXT_COLOR_LIGHT,
+  applySiteTheme,
+  normalizeDarkBorderMode,
+  normalizeHexColor,
+  normalizeSiteFontFamily,
+  normalizeSiteFontScale,
+} from '@/utils/siteTheme'
 
 export const useAppStore = defineStore('app', () => {
   // ==================== State ====================
@@ -28,6 +39,12 @@ export const useAppStore = defineStore('app', () => {
   const publicSettingsLoading = ref<boolean>(false)
   const siteName = ref<string>('Sub2API')
   const siteLogo = ref<string>('')
+  const sitePrimaryColor = ref<string>(normalizeHexColor(undefined))
+  const siteDarkBorderMode = ref(normalizeDarkBorderMode(undefined))
+  const siteFontFamily = ref(normalizeSiteFontFamily(DEFAULT_SITE_FONT_FAMILY))
+  const siteFontScale = ref(normalizeSiteFontScale(DEFAULT_SITE_FONT_SCALE))
+  const siteTextColorLight = ref(normalizeHexColor(DEFAULT_SITE_TEXT_COLOR_LIGHT))
+  const siteTextColorDark = ref(normalizeHexColor(DEFAULT_SITE_TEXT_COLOR_DARK))
   const siteVersion = ref<string>('')
   const contactInfo = ref<string>('')
   const apiBaseUrl = ref<string>('')
@@ -296,6 +313,26 @@ export const useAppStore = defineStore('app', () => {
     cachedPublicSettings.value = config
     siteName.value = config.site_name || 'Sub2API'
     siteLogo.value = config.site_logo || ''
+    sitePrimaryColor.value = normalizeHexColor(config.site_primary_color)
+    siteDarkBorderMode.value = normalizeDarkBorderMode(config.site_dark_border_mode)
+    siteFontFamily.value = normalizeSiteFontFamily(config.site_font_family)
+    siteFontScale.value = normalizeSiteFontScale(config.site_font_scale)
+    siteTextColorLight.value = normalizeHexColor(
+      config.site_text_color_light,
+      DEFAULT_SITE_TEXT_COLOR_LIGHT,
+    )
+    siteTextColorDark.value = normalizeHexColor(
+      config.site_text_color_dark,
+      DEFAULT_SITE_TEXT_COLOR_DARK,
+    )
+    applySiteTheme({
+      primaryColor: sitePrimaryColor.value,
+      darkBorderMode: siteDarkBorderMode.value,
+      fontFamily: siteFontFamily.value,
+      fontScale: siteFontScale.value,
+      textColorLight: siteTextColorLight.value,
+      textColorDark: siteTextColorDark.value,
+    })
     siteVersion.value = config.version || ''
     contactInfo.value = config.contact_info || ''
     apiBaseUrl.value = config.api_base_url || ''
@@ -342,6 +379,12 @@ export const useAppStore = defineStore('app', () => {
         site_name: siteName.value,
         site_logo: siteLogo.value,
         site_subtitle: '',
+        site_primary_color: sitePrimaryColor.value,
+        site_dark_border_mode: siteDarkBorderMode.value,
+        site_font_family: siteFontFamily.value,
+        site_font_scale: siteFontScale.value,
+        site_text_color_light: siteTextColorLight.value,
+        site_text_color_dark: siteTextColorDark.value,
         api_base_url: apiBaseUrl.value,
         contact_info: contactInfo.value,
         doc_url: docUrl.value,
@@ -448,6 +491,12 @@ export const useAppStore = defineStore('app', () => {
     publicSettingsLoaded,
     siteName,
     siteLogo,
+    sitePrimaryColor,
+    siteDarkBorderMode,
+    siteFontFamily,
+    siteFontScale,
+    siteTextColorLight,
+    siteTextColorDark,
     siteVersion,
     contactInfo,
     apiBaseUrl,

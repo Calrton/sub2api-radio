@@ -23,6 +23,10 @@ type UserUsageTrendPoint = usagestats.UserUsageTrendPoint
 type UserSpendingRankingItem = usagestats.UserSpendingRankingItem
 type UserSpendingRankingResponse = usagestats.UserSpendingRankingResponse
 
+// PublicUserRankingItem represents one internal row in the public user ranking.
+type PublicUserRankingItem = usagestats.PublicUserRankingItem
+type PublicUserRankingResponse = usagestats.PublicUserRankingResponse
+
 // APIKeyUsageTrendPoint represents API key usage trend data point
 type APIKeyUsageTrendPoint = usagestats.APIKeyUsageTrendPoint
 
@@ -223,6 +227,82 @@ func (r *usageLogRepository) GetUserSpendingRanking(ctx context.Context, startTi
 		TotalActualCost: totalActualCost,
 		TotalRequests:   totalRequests,
 		TotalTokens:     totalTokens,
+	}, nil
+}
+
+// GetPublicUserRanking returns a bounded, user-facing token ranking.
+func (r *usageLogRepository) GetPublicUserRanking(ctx context.Context, startTime, endTime time.Time, limit int) (result *PublicUserRankingResponse, err error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 20 {
+		limit = 20
+	}
+
+	query := `
+		WITH user_usage AS (
+			SELECT
+				u.user_id,
+				COALESCE(NULLIF(us.email, ''), NULLIF(us.username, ''), '') AS email,
+				COUNT(*) AS requests,
+				COALESCE(SUM(u.input_tokens), 0) AS input_tokens,
+				COALESCE(SUM(u.output_tokens), 0) AS output_tokens,
+				COALESCE(SUM(u.cache_creation_tokens), 0) AS cache_create_tokens,
+				COALESCE(SUM(u.cache_read_tokens), 0) AS cache_read_tokens,
+				COALESCE(SUM(u.input_tokens + u.output_tokens + u.cache_creation_tokens + u.cache_read_tokens), 0) AS total_tokens
+			FROM usage_logs u
+			JOIN users us ON us.id = u.user_id AND us.deleted_at IS NULL
+			WHERE u.created_at >= $1 AND u.created_at < $2
+			GROUP BY u.user_id, us.email, us.username
+		)
+		SELECT
+			user_id,
+			email,
+			requests,
+			input_tokens,
+			output_tokens,
+			cache_create_tokens,
+			cache_read_tokens,
+			total_tokens
+		FROM user_usage
+		ORDER BY total_tokens DESC, requests DESC, user_id ASC
+		LIMIT $3
+	`
+
+	rows, err := r.sql.QueryContext(ctx, query, startTime, endTime, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil && err == nil {
+			err = closeErr
+			result = nil
+		}
+	}()
+
+	ranking := make([]PublicUserRankingItem, 0)
+	for rows.Next() {
+		var row PublicUserRankingItem
+		if err = rows.Scan(
+			&row.UserID,
+			&row.Email,
+			&row.Requests,
+			&row.InputTokens,
+			&row.OutputTokens,
+			&row.CacheCreateTokens,
+			&row.CacheReadTokens,
+			&row.TotalTokens,
+		); err != nil {
+			return nil, err
+		}
+		ranking = append(ranking, row)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &PublicUserRankingResponse{
+		Ranking: ranking,
 	}, nil
 }
 

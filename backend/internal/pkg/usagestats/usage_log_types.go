@@ -164,6 +164,24 @@ type UserSpendingRankingResponse struct {
 	TotalTokens     int64                     `json:"total_tokens"`
 }
 
+// PublicUserRankingItem is the internal aggregate row for the user-facing ranking.
+// UserID and Username must be removed or masked before the response leaves the handler.
+type PublicUserRankingItem struct {
+	UserID            int64
+	Email             string
+	Requests          int64
+	InputTokens       int64
+	OutputTokens      int64
+	CacheCreateTokens int64
+	CacheReadTokens   int64
+	TotalTokens       int64
+}
+
+// PublicUserRankingResponse contains a bounded ranking plus totals for the selected window.
+type PublicUserRankingResponse struct {
+	Ranking []PublicUserRankingItem
+}
+
 // UserBreakdownItem represents per-user usage breakdown within a dimension (group, model, endpoint).
 type UserBreakdownItem struct {
 	UserID       int64   `json:"user_id"`

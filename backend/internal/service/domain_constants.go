@@ -382,6 +382,12 @@ const (
 	SettingKeySiteName                    = "site_name"                     // 网站名称
 	SettingKeySiteLogo                    = "site_logo"                     // 网站Logo (base64)
 	SettingKeySiteSubtitle                = "site_subtitle"                 // 网站副标题
+	SettingKeySitePrimaryColor            = "site_primary_color"            // 站点主色 (#RRGGBB)
+	SettingKeySiteDarkBorderMode          = "site_dark_border_mode"         // 深色模式边框：white/neutral/accent
+	SettingKeySiteFontFamily              = "site_font_family"              // 站点字体：system/geist/microsoft-yahei
+	SettingKeySiteFontScale               = "site_font_scale"               // 全站字号比例（85-115）
+	SettingKeySiteTextColorLight          = "site_text_color_light"         // 浅色模式正文色 (#RRGGBB)
+	SettingKeySiteTextColorDark           = "site_text_color_dark"          // 深色模式正文色 (#RRGGBB)
 	SettingKeyAPIBaseURL                  = "api_base_url"                  // API端点地址（用于客户端配置和导入）
 	SettingKeyContactInfo                 = "contact_info"                  // 客服联系方式
 	SettingKeyDocURL                      = "doc_url"                       // 文档链接

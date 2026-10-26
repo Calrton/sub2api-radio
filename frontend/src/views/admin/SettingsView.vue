@@ -6451,6 +6451,240 @@
                 </div>
               </div>
 
+              <!-- Site Theme -->
+              <div class="border-t border-gray-100 pt-4 dark:border-dark-700">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ t("admin.settings.site.themeTitle") }}
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.themeDescription") }}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    @click="resetSiteTheme"
+                  >
+                    <Icon name="refresh" size="sm" />
+                    {{ t("admin.settings.site.resetTheme") }}
+                  </button>
+                </div>
+
+                <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <label
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      {{ t("admin.settings.site.primaryColor") }}
+                    </label>
+                    <div class="flex items-center gap-3">
+                      <input
+                        v-model="form.site_primary_color"
+                        type="color"
+                        class="h-10 w-14 cursor-pointer rounded-md border border-gray-300 bg-white p-1 dark:border-dark-600 dark:bg-dark-800"
+                        :aria-label="t('admin.settings.site.primaryColor')"
+                      />
+                      <input
+                        v-model="form.site_primary_color"
+                        type="text"
+                        maxlength="7"
+                        class="input flex-1 font-mono text-sm uppercase"
+                        placeholder="#B06F30"
+                        @blur="normalizePrimaryColorInput"
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-secondary whitespace-nowrap"
+                        @click="applyWarmGoldPreset"
+                      >
+                        {{ t("admin.settings.site.warmGoldPreset") }}
+                      </button>
+                    </div>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.primaryColorHint") }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      {{ t("admin.settings.site.darkBorderMode") }}
+                    </span>
+                    <div class="space-y-2">
+                      <label
+                        v-for="option in DARK_BORDER_OPTIONS"
+                        :key="option.value"
+                        class="flex cursor-pointer items-center gap-3 rounded-md border border-gray-200 px-3 py-2 dark:border-dark-600"
+                      >
+                        <input
+                          v-model="form.site_dark_border_mode"
+                          type="radio"
+                          name="site-dark-border-mode"
+                          :value="option.value"
+                        />
+                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                          {{ t(`admin.settings.site.darkBorderOptions.${option.value}`) }}
+                        </span>
+                      </label>
+                    </div>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.darkBorderModeHint") }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      {{ t("admin.settings.site.fontFamily") }}
+                    </label>
+                    <Select
+                      v-model="form.site_font_family"
+                      :options="siteFontOptions"
+                      :searchable="false"
+                      :aria-label="t('admin.settings.site.fontFamily')"
+                      data-testid="site-font-family"
+                    />
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.fontFamilyHint") }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div class="mb-2 flex items-center justify-between gap-3">
+                      <label
+                        for="site-font-scale"
+                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >
+                        {{ t("admin.settings.site.fontScale") }}
+                      </label>
+                      <span class="font-mono text-xs text-gray-500 dark:text-gray-400">
+                        {{ form.site_font_scale }}%
+                      </span>
+                    </div>
+                    <input
+                      id="site-font-scale"
+                      v-model.number="form.site_font_scale"
+                      type="range"
+                      :min="MIN_SITE_FONT_SCALE"
+                      :max="MAX_SITE_FONT_SCALE"
+                      step="1"
+                      class="h-2 w-full cursor-pointer accent-primary-600"
+                    />
+                    <div class="mt-1 flex justify-between text-[11px] text-gray-400 dark:text-dark-400">
+                      <span>{{ MIN_SITE_FONT_SCALE }}%</span>
+                      <span>100%</span>
+                      <span>{{ MAX_SITE_FONT_SCALE }}%</span>
+                    </div>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.fontScaleHint") }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      {{ t("admin.settings.site.textColorLight") }}
+                    </label>
+                    <div class="flex items-center gap-3">
+                      <input
+                        v-model="form.site_text_color_light"
+                        type="color"
+                        class="h-10 w-14 cursor-pointer rounded-md border border-gray-300 bg-white p-1 dark:border-dark-600 dark:bg-dark-800"
+                        :aria-label="t('admin.settings.site.textColorLight')"
+                        data-testid="site-text-color-light"
+                      />
+                      <input
+                        v-model="form.site_text_color_light"
+                        type="text"
+                        maxlength="7"
+                        class="input flex-1 font-mono text-sm uppercase"
+                        placeholder="#111827"
+                        data-testid="site-text-color-light-input"
+                        @blur="normalizeTextColorInput('light')"
+                      />
+                    </div>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.textColorLightHint") }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      {{ t("admin.settings.site.textColorDark") }}
+                    </label>
+                    <div class="flex items-center gap-3">
+                      <input
+                        v-model="form.site_text_color_dark"
+                        type="color"
+                        class="h-10 w-14 cursor-pointer rounded-md border border-gray-300 bg-white p-1 dark:border-dark-600 dark:bg-dark-800"
+                        :aria-label="t('admin.settings.site.textColorDark')"
+                        data-testid="site-text-color-dark"
+                      />
+                      <input
+                        v-model="form.site_text_color_dark"
+                        type="text"
+                        maxlength="7"
+                        class="input flex-1 font-mono text-sm uppercase"
+                        placeholder="#F3F4F6"
+                        data-testid="site-text-color-dark-input"
+                        @blur="normalizeTextColorInput('dark')"
+                      />
+                    </div>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.textColorDarkHint") }}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-900/50"
+                  data-testid="site-theme-preview"
+                >
+                  <div class="mb-3 flex items-center justify-between gap-3">
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.themePreview") }}
+                    </span>
+                    <span class="text-[11px] text-gray-400 dark:text-dark-400">
+                      {{ t("admin.settings.site.themePreviewLive") }}
+                    </span>
+                  </div>
+                  <p
+                    class="text-sm text-gray-700 dark:text-gray-300"
+                    data-testid="site-theme-preview-text"
+                    :style="{
+                      fontFamily: siteFontPreviewStack,
+                      fontSize: `${normalizeSiteFontScale(form.site_font_scale)}%`,
+                      color: isDarkTheme
+                        ? form.site_text_color_dark
+                        : form.site_text_color_light,
+                    }"
+                  >
+                    {{ t("admin.settings.site.themePreviewText") }}
+                  </p>
+                  <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      class="rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white"
+                    >
+                      {{ t("admin.settings.site.themePreviewButton") }}
+                    </button>
+                    <span class="text-xs text-emerald-600 dark:text-emerald-400">
+                      {{ t("admin.settings.site.themePreviewSuccess") }}
+                    </span>
+                    <span class="text-xs text-red-600 dark:text-red-400">
+                      {{ t("admin.settings.site.themePreviewDanger") }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <!-- API Base URL -->
               <div>
                 <label
@@ -8982,7 +9216,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from "vue";
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { adminAPI } from "@/api";
 import {
@@ -9073,6 +9307,24 @@ import {
   defaultFingerprintSignalRows,
   type FingerprintSignalRow,
 } from "./codexFingerprintSignals";
+import {
+  DARK_BORDER_OPTIONS,
+  DEFAULT_SITE_FONT_FAMILY,
+  DEFAULT_SITE_FONT_SCALE,
+  DEFAULT_SITE_PRIMARY_COLOR,
+  DEFAULT_SITE_TEXT_COLOR_DARK,
+  DEFAULT_SITE_TEXT_COLOR_LIGHT,
+  MAX_SITE_FONT_SCALE,
+  MIN_SITE_FONT_SCALE,
+  SITE_FONT_OPTIONS,
+  applySiteTheme,
+  isValidHexColor,
+  normalizeDarkBorderMode,
+  normalizeHexColor,
+  normalizeSiteFontFamily,
+  normalizeSiteFontScale,
+  resolveSiteFontStack,
+} from "@/utils/siteTheme";
 
 const { t, locale } = useI18n();
 const appStore = useAppStore();
@@ -9083,6 +9335,70 @@ const isZhLocale = computed(() => locale.value.startsWith("zh"));
 
 function localText(zh: string, en: string): string {
   return isZhLocale.value ? zh : en;
+}
+
+function normalizePrimaryColorInput(): void {
+  const normalized = normalizeHexColor(form.site_primary_color, "");
+  if (normalized) {
+    form.site_primary_color = normalized;
+  }
+}
+
+function applyWarmGoldPreset(): void {
+  form.site_primary_color = DEFAULT_SITE_PRIMARY_COLOR;
+}
+
+const siteFontOptions = computed<SelectOption[]>(() =>
+  SITE_FONT_OPTIONS.map((option) => ({
+    value: option.value,
+    label:
+      option.value === "geist"
+        ? `Geist (${t("admin.settings.site.fontGeistNote")})`
+        : option.value === "microsoft-yahei"
+          ? t("admin.settings.site.fontMicrosoftYaHei")
+          : t("admin.settings.site.fontSystem"),
+  })),
+);
+
+const siteFontPreviewStack = computed(() =>
+  resolveSiteFontStack(normalizeSiteFontFamily(form.site_font_family)),
+);
+
+const isDarkTheme = ref(
+  typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark"),
+);
+let themeClassObserver: MutationObserver | null = null;
+
+function syncDarkThemeState(): void {
+  isDarkTheme.value = document.documentElement.classList.contains("dark");
+}
+
+function normalizeTextColorInput(mode: "light" | "dark"): void {
+  const fallback =
+    mode === "light"
+      ? DEFAULT_SITE_TEXT_COLOR_LIGHT
+      : DEFAULT_SITE_TEXT_COLOR_DARK;
+  if (mode === "light") {
+    form.site_text_color_light = normalizeHexColor(
+      form.site_text_color_light,
+      fallback,
+    );
+  } else {
+    form.site_text_color_dark = normalizeHexColor(
+      form.site_text_color_dark,
+      fallback,
+    );
+  }
+}
+
+function resetSiteTheme(): void {
+  form.site_primary_color = DEFAULT_SITE_PRIMARY_COLOR;
+  form.site_dark_border_mode = "accent";
+  form.site_font_family = DEFAULT_SITE_FONT_FAMILY;
+  form.site_font_scale = DEFAULT_SITE_FONT_SCALE;
+  form.site_text_color_light = DEFAULT_SITE_TEXT_COLOR_LIGHT;
+  form.site_text_color_dark = DEFAULT_SITE_TEXT_COLOR_DARK;
 }
 
 const paymentGuideHref = computed(() =>
@@ -9812,6 +10128,12 @@ const form = reactive<SettingsForm>({
   site_name: "Sub2API",
   site_logo: "",
   site_subtitle: "Subscription to API Conversion Platform",
+  site_primary_color: DEFAULT_SITE_PRIMARY_COLOR,
+  site_dark_border_mode: "accent",
+  site_font_family: DEFAULT_SITE_FONT_FAMILY,
+  site_font_scale: DEFAULT_SITE_FONT_SCALE,
+  site_text_color_light: DEFAULT_SITE_TEXT_COLOR_LIGHT,
+  site_text_color_dark: DEFAULT_SITE_TEXT_COLOR_DARK,
   api_base_url: "",
   contact_info: "",
   doc_url: "",
@@ -10073,6 +10395,40 @@ const form = reactive<SettingsForm>({
   // Allow user view error requests
   allow_user_view_error_requests: false,
 });
+
+watch(
+  () => [
+    form.site_primary_color,
+    form.site_dark_border_mode,
+    form.site_font_family,
+    form.site_font_scale,
+    form.site_text_color_light,
+    form.site_text_color_dark,
+  ] as const,
+  ([
+    primaryColor,
+    darkBorderMode,
+    fontFamily,
+    fontScale,
+    textColorLight,
+    textColorDark,
+  ]) => {
+    applySiteTheme({
+      primaryColor: isValidHexColor(primaryColor)
+        ? primaryColor
+        : DEFAULT_SITE_PRIMARY_COLOR,
+      darkBorderMode,
+      fontFamily,
+      fontScale,
+      textColorLight: isValidHexColor(textColorLight)
+        ? textColorLight
+        : DEFAULT_SITE_TEXT_COLOR_LIGHT,
+      textColorDark: isValidHexColor(textColorDark)
+        ? textColorDark
+        : DEFAULT_SITE_TEXT_COLOR_DARK,
+    });
+  },
+);
 
 // 人机验证 UI 状态：单卡片「总开关 + 服务商单选」，落库仍是三个独立
 // enabled 键（与上游一致），由下面的映射保证同一时间至多一家启用。
@@ -11058,6 +11414,20 @@ async function loadSettings() {
         (form as Record<string, unknown>)[key] = value;
       }
     }
+    form.site_primary_color = normalizeHexColor(settings.site_primary_color);
+    form.site_dark_border_mode = normalizeDarkBorderMode(
+      settings.site_dark_border_mode,
+    );
+    form.site_font_family = normalizeSiteFontFamily(settings.site_font_family);
+    form.site_font_scale = normalizeSiteFontScale(settings.site_font_scale);
+    form.site_text_color_light = normalizeHexColor(
+      settings.site_text_color_light,
+      DEFAULT_SITE_TEXT_COLOR_LIGHT,
+    );
+    form.site_text_color_dark = normalizeHexColor(
+      settings.site_text_color_dark,
+      DEFAULT_SITE_TEXT_COLOR_DARK,
+    );
     // For this optional override, null explicitly selects per-account rates.
     if (settings.openai_oauth_scheduling_rate_multiplier === null) {
       form.openai_oauth_scheduling_rate_multiplier = null;
@@ -11322,6 +11692,54 @@ const siteBillingModeHint = computed(() =>
 async function saveSettings() {
   saving.value = true;
   try {
+    const normalizedPrimaryColor = normalizeHexColor(
+      form.site_primary_color,
+      "",
+    );
+    if (!isValidHexColor(form.site_primary_color) || !normalizedPrimaryColor) {
+      appStore.showError(t("admin.settings.site.invalidPrimaryColor"));
+      return;
+    }
+    form.site_primary_color = normalizedPrimaryColor;
+    form.site_dark_border_mode = normalizeDarkBorderMode(
+      form.site_dark_border_mode,
+    );
+    form.site_font_family = normalizeSiteFontFamily(form.site_font_family);
+    const normalizedFontScale = Math.round(Number(form.site_font_scale));
+    if (
+      !Number.isFinite(normalizedFontScale) ||
+      normalizedFontScale < MIN_SITE_FONT_SCALE ||
+      normalizedFontScale > MAX_SITE_FONT_SCALE
+    ) {
+      appStore.showError(
+        t("admin.settings.site.invalidFontScale", {
+          min: MIN_SITE_FONT_SCALE,
+          max: MAX_SITE_FONT_SCALE,
+        }),
+      );
+      return;
+    }
+    form.site_font_scale = normalizedFontScale;
+    const normalizedLightTextColor = normalizeHexColor(
+      form.site_text_color_light,
+      "",
+    );
+    const normalizedDarkTextColor = normalizeHexColor(
+      form.site_text_color_dark,
+      "",
+    );
+    if (
+      !isValidHexColor(form.site_text_color_light) ||
+      !isValidHexColor(form.site_text_color_dark) ||
+      !normalizedLightTextColor ||
+      !normalizedDarkTextColor
+    ) {
+      appStore.showError(t("admin.settings.site.invalidTextColor"));
+      return;
+    }
+    form.site_text_color_light = normalizedLightTextColor;
+    form.site_text_color_dark = normalizedDarkTextColor;
+
     const normalizedTableDefaultPageSize = Math.floor(
       Number(form.table_default_page_size),
     );
@@ -11519,6 +11937,12 @@ async function saveSettings() {
       site_name: form.site_name,
       site_logo: form.site_logo,
       site_subtitle: form.site_subtitle,
+      site_primary_color: form.site_primary_color,
+      site_dark_border_mode: form.site_dark_border_mode,
+      site_font_family: form.site_font_family,
+      site_font_scale: form.site_font_scale,
+      site_text_color_light: form.site_text_color_light,
+      site_text_color_dark: form.site_text_color_dark,
       api_base_url: form.api_base_url,
       contact_info: form.contact_info,
       doc_url: form.doc_url,
@@ -12920,6 +13344,12 @@ async function handleDeleteProvider() {
 }
 
 onMounted(() => {
+  syncDarkThemeState();
+  themeClassObserver = new MutationObserver(syncDarkThemeState);
+  themeClassObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
   loadSettings();
   loadSubscriptionGroups();
   loadAdminApiKey();
@@ -12933,6 +13363,11 @@ onMounted(() => {
   loadRectifierSettings();
   loadBetaPolicySettings();
   loadProviders();
+});
+
+onBeforeUnmount(() => {
+  themeClassObserver?.disconnect();
+  themeClassObserver = null;
 });
 
 // =========================

@@ -7,11 +7,13 @@ import (
 	"log/slog"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
@@ -156,6 +158,12 @@ type UpdateSettingsRequest struct {
 	SiteName                    string                `json:"site_name"`
 	SiteLogo                    string                `json:"site_logo"`
 	SiteSubtitle                string                `json:"site_subtitle"`
+	SitePrimaryColor            *string               `json:"site_primary_color"`
+	SiteDarkBorderMode          *string               `json:"site_dark_border_mode"`
+	SiteFontFamily              *string               `json:"site_font_family"`
+	SiteFontScale               *int                  `json:"site_font_scale"`
+	SiteTextColorLight          *string               `json:"site_text_color_light"`
+	SiteTextColorDark           *string               `json:"site_text_color_dark"`
 	APIBaseURL                  string                `json:"api_base_url"`
 	ContactInfo                 string                `json:"contact_info"`
 	DocURL                      string                `json:"doc_url"`
@@ -437,6 +445,103 @@ var settingKeyJSONAliases = map[string]string{
 	"smtp_from_email": service.SettingKeySMTPFrom,
 }
 
+var sitePrimaryColorPattern = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
+
+func normalizeSitePrimaryColor(value *string, fallback string) (string, error) {
+	if value == nil {
+		if fallback == "" {
+			return "#B06F30", nil
+		}
+		return strings.ToUpper(fallback), nil
+	}
+	normalized := strings.ToUpper(strings.TrimSpace(*value))
+	if !sitePrimaryColorPattern.MatchString(normalized) {
+		return "", infraerrors.BadRequest(
+			"INVALID_SITE_PRIMARY_COLOR",
+			"site_primary_color must use #RRGGBB format",
+		)
+	}
+	return normalized, nil
+}
+
+func normalizeSiteDarkBorderMode(value *string, fallback string) (string, error) {
+	if value == nil {
+		switch fallback {
+		case "white", "neutral", "accent":
+			return fallback, nil
+		default:
+			return "accent", nil
+		}
+	}
+	normalized := strings.ToLower(strings.TrimSpace(*value))
+	switch normalized {
+	case "white", "neutral", "accent":
+		return normalized, nil
+	default:
+		return "", infraerrors.BadRequest(
+			"INVALID_SITE_DARK_BORDER_MODE",
+			"site_dark_border_mode must be white, neutral, or accent",
+		)
+	}
+}
+
+func normalizeSiteFontFamily(value *string, fallback string) (string, error) {
+	if value == nil {
+		switch fallback {
+		case "geist", "microsoft-yahei":
+			return fallback, nil
+		default:
+			return "system", nil
+		}
+	}
+	switch strings.ToLower(strings.TrimSpace(*value)) {
+	case "system":
+		return "system", nil
+	case "geist":
+		return "geist", nil
+	case "microsoft-yahei":
+		return "microsoft-yahei", nil
+	default:
+		return "", infraerrors.BadRequest(
+			"INVALID_SITE_FONT_FAMILY",
+			"site_font_family must be system, geist, or microsoft-yahei",
+		)
+	}
+}
+
+func normalizeSiteFontScale(value *int, fallback int) (int, error) {
+	if value == nil {
+		if fallback < 85 || fallback > 115 {
+			return 100, nil
+		}
+		return fallback, nil
+	}
+	if *value < 85 || *value > 115 {
+		return 0, infraerrors.BadRequest(
+			"INVALID_SITE_FONT_SCALE",
+			"site_font_scale must be between 85 and 115",
+		)
+	}
+	return *value, nil
+}
+
+func normalizeSiteTextColor(value *string, fallback string) (string, error) {
+	if value == nil {
+		if sitePrimaryColorPattern.MatchString(fallback) {
+			return strings.ToUpper(fallback), nil
+		}
+		return "#111827", nil
+	}
+	normalized := strings.ToUpper(strings.TrimSpace(*value))
+	if !sitePrimaryColorPattern.MatchString(normalized) {
+		return "", infraerrors.BadRequest(
+			"INVALID_SITE_TEXT_COLOR",
+			"site text colors must use #RRGGBB format",
+		)
+	}
+	return normalized, nil
+}
+
 // settingKeyByJSONName maps the value-typed top-level JSON fields of
 // UpdateSettingsRequest to the setting key each one writes. Resolved once from
 // the struct tags so new fields are covered without touching this file.
@@ -532,6 +637,54 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	registrationEmailDomainQuotaEnabled := previousSettings.RegistrationEmailDomainQuotaEnabled
 	if req.RegistrationEmailDomainQuotaEnabled != nil {
 		registrationEmailDomainQuotaEnabled = *req.RegistrationEmailDomainQuotaEnabled
+	}
+	sitePrimaryColor, err := normalizeSitePrimaryColor(
+		req.SitePrimaryColor,
+		previousSettings.SitePrimaryColor,
+	)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	siteDarkBorderMode, err := normalizeSiteDarkBorderMode(
+		req.SiteDarkBorderMode,
+		previousSettings.SiteDarkBorderMode,
+	)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	siteFontFamily, err := normalizeSiteFontFamily(
+		req.SiteFontFamily,
+		previousSettings.SiteFontFamily,
+	)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	siteFontScale, err := normalizeSiteFontScale(
+		req.SiteFontScale,
+		previousSettings.SiteFontScale,
+	)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	siteTextColorLight, err := normalizeSiteTextColor(
+		req.SiteTextColorLight,
+		previousSettings.SiteTextColorLight,
+	)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	siteTextColorDark, err := normalizeSiteTextColor(
+		req.SiteTextColorDark,
+		previousSettings.SiteTextColorDark,
+	)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
 	}
 	if passkeyEnabled {
 		configured, _, _ := h.settingService.PasskeyConfiguration()
@@ -1643,6 +1796,12 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		SiteName:                               req.SiteName,
 		SiteLogo:                               req.SiteLogo,
 		SiteSubtitle:                           req.SiteSubtitle,
+		SitePrimaryColor:                       sitePrimaryColor,
+		SiteDarkBorderMode:                     siteDarkBorderMode,
+		SiteFontFamily:                         siteFontFamily,
+		SiteFontScale:                          siteFontScale,
+		SiteTextColorLight:                     siteTextColorLight,
+		SiteTextColorDark:                      siteTextColorDark,
 		APIBaseURL:                             req.APIBaseURL,
 		ContactInfo:                            req.ContactInfo,
 		DocURL:                                 req.DocURL,
@@ -2307,6 +2466,12 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		SiteName:                                               updatedSettings.SiteName,
 		SiteLogo:                                               updatedSettings.SiteLogo,
 		SiteSubtitle:                                           updatedSettings.SiteSubtitle,
+		SitePrimaryColor:                                       updatedSettings.SitePrimaryColor,
+		SiteDarkBorderMode:                                     updatedSettings.SiteDarkBorderMode,
+		SiteFontFamily:                                         updatedSettings.SiteFontFamily,
+		SiteFontScale:                                          updatedSettings.SiteFontScale,
+		SiteTextColorLight:                                     updatedSettings.SiteTextColorLight,
+		SiteTextColorDark:                                      updatedSettings.SiteTextColorDark,
 		APIBaseURL:                                             updatedSettings.APIBaseURL,
 		ContactInfo:                                            updatedSettings.ContactInfo,
 		DocURL:                                                 updatedSettings.DocURL,
