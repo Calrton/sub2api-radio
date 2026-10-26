@@ -786,8 +786,9 @@ onBeforeUnmount(() => {
   --bgm-primary-bright: rgb(var(--primary-500, 20 184 166));
   --bgm-primary-soft: rgb(var(--primary-50, 240 253 250) / 0.72);
   --bgm-shadow: 0 22px 60px rgba(15, 23, 42, 0.18);
+  --bgm-edge-gap: 8px;
   position: fixed;
-  right: env(safe-area-inset-right, 0px);
+  right: calc(env(safe-area-inset-right, 0px) + var(--bgm-edge-gap));
   bottom: max(20px, env(safe-area-inset-bottom));
   z-index: 80;
   color: var(--bgm-text);
@@ -1219,7 +1220,7 @@ onBeforeUnmount(() => {
 
 .bgm-panel {
   position: absolute;
-  right: 0;
+  right: calc(var(--bgm-edge-gap) * -1);
   bottom: 64px;
   display: flex;
   width: 370px;
@@ -1570,9 +1571,10 @@ onBeforeUnmount(() => {
 
 @media (max-width: 640px) {
   .xihe-bgm-root {
-    right: env(safe-area-inset-right, 0px);
+    --bgm-edge-gap: 6px;
+    right: calc(env(safe-area-inset-right, 0px) + var(--bgm-edge-gap));
     bottom: max(12px, env(safe-area-inset-bottom));
-    left: env(safe-area-inset-left, 0px);
+    left: calc(env(safe-area-inset-left, 0px) + var(--bgm-edge-gap));
   }
 
   .bgm-fab {
